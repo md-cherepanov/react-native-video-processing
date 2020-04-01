@@ -544,12 +544,13 @@ public class Trimmer {
   static void getPreviewImageAtPosition(String source, double sec, String format, final Promise promise, ReactApplicationContext ctx) {
     Bitmap bmp = null;
     int orientation = 0;
-    FFmpegMediaMetadataRetriever metadataRetriever = new FFmpegMediaMetadataRetriever();
+    FFmpegMediaMetadataRetriever metadataRetriever = null;
     try {
+      metadataRetriever = new FFmpegMediaMetadataRetriever();
       FFmpegMediaMetadataRetriever.IN_PREFERRED_CONFIG = Bitmap.Config.ARGB_8888;
       metadataRetriever.setDataSource(source);
 
-      bmp = metadataRetriever.getFrameAtTime((long) (sec * 1000000));
+      bmp = metadataRetriever.getFrameAtTime((long) (sec * 1000000), FFmpegMediaMetadataRetriever.OPTION_CLOSEST);
       if(bmp == null){
         promise.reject("Failed to get preview at requested position.");
         return;
@@ -557,6 +558,9 @@ public class Trimmer {
 
       // NOTE: FIX ROTATED BITMAP
       orientation = Integer.parseInt(metadataRetriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+    } catch (Exception e) {
+      promise.reject(e.getMessage());
+      return;
     } finally {
       metadataRetriever.release();
     }
